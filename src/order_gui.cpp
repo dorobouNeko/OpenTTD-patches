@@ -610,6 +610,7 @@ static const OrderConditionVariable _order_conditional_variable[] = {
 	OCV_TRAIN_IN_SLOT,
 	OCV_PERCENT,
 	OCV_UNCONDITIONALLY,
+	OCV_CARGO_AMOUNT,
 };
 
 static const StringID _order_conditional_condition[] = {

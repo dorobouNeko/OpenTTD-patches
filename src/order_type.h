@@ -36,17 +36,17 @@ static const uint IMPLICIT_ORDER_ONLY_CAP = 32;
 
 /** Order types */
 enum OrderType {
-	OT_BEGIN         = 0,
-	OT_NOTHING       = 0,
-	OT_GOTO_STATION  = 1,
-	OT_GOTO_DEPOT    = 2,
-	OT_LOADING       = 3,
-	OT_LEAVESTATION  = 4,
-	OT_DUMMY         = 5,
-	OT_GOTO_WAYPOINT = 6,
-	OT_CONDITIONAL   = 7,
-	OT_IMPLICIT     = 8,
-	OT_WAITING      = 9,
+	OT_BEGIN           = 0,
+	OT_NOTHING         = 0,
+	OT_GOTO_STATION    = 1,
+	OT_GOTO_DEPOT      = 2,
+	OT_LOADING         = 3,
+	OT_LEAVESTATION    = 4,
+	OT_DUMMY           = 5,
+	OT_GOTO_WAYPOINT   = 6,
+	OT_CONDITIONAL     = 7,
+	OT_IMPLICIT        = 8,
+	OT_WAITING         = 9,
 	OT_LOADING_ADVANCE = 10,
 	OT_END
 };
@@ -149,6 +149,7 @@ enum OrderConditionVariable {
 	OCV_PERCENT,            ///< Skip xx percent of times
 	OCV_SLOT_OCCUPANCY,     ///< Test if train slot is fully occupied
 	OCV_TRAIN_IN_SLOT,      ///< Test if train is in slot
+	OCV_CARGO_AMOUNT,       ///< Skip if specified cargo passes conditional test
 	OCV_END
 };
 
