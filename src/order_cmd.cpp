@@ -1102,7 +1102,11 @@ CommandCost CmdInsertOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 					if (occ != OCC_IS_TRUE && occ != OCC_IS_FALSE) return CMD_ERROR;
 					break;
 				}
-
+				case OCV_CARGO_AMOUNT:
+					if (new_order.GetXData() > 0xFFFFFFFF) return CMD_ERROR; // Is this necessary?
+					if (!CargoSpec::Get(new_order.GetConditionValue())->IsValid()) return CMD_ERROR;
+					if (occ == OCC_IS_TRUE || occ == OCC_IS_FALSE) return CMD_ERROR;
+					break;
 				case OCV_CARGO_WAITING:
 				case OCV_CARGO_ACCEPTANCE:
 					if (!CargoSpec::Get(new_order.GetConditionValue())->IsValid()) return CMD_ERROR;
@@ -1546,7 +1550,7 @@ CommandCost CmdMoveOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint32 
  * @param p2 various bitstuffed elements
  *  - p2 = (bit 0 -  3) - what data to modify (@see ModifyOrderFlags)
  *  - p2 = (bit 4 - 19) - the data to modify
- *  - p2 = (bit 20 - 27) - a CargoID for cargo type orders (MOF_CARGO_TYPE_UNLOAD or MOF_CARGO_TYPE_LOAD)
+ *  - p2 = (bit 21 - 27) - a CargoID for cargo type orders (MOF_CARGO_TYPE_UNLOAD or MOF_CARGO_TYPE_LOAD)
  * @param text unused
  * @return the cost of this operation or an error
  */
@@ -1584,7 +1588,7 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 			break;
 
 		case OT_CONDITIONAL:
-			if (mof != MOF_COND_VARIABLE && mof != MOF_COND_COMPARATOR && mof != MOF_COND_VALUE && mof != MOF_COND_DESTINATION) return CMD_ERROR;
+			if (mof != MOF_COND_VARIABLE && mof != MOF_COND_COMPARATOR && mof != MOF_COND_VALUE && mof != MOF_COND_DESTINATION && mof != MOF_COND_XDATA) return CMD_ERROR;
 			break;
 
 		default:
@@ -1681,8 +1685,10 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 
 				case OCV_CARGO_ACCEPTANCE:
 				case OCV_CARGO_WAITING:
+				case OCV_CARGO_AMOUNT:
 					if (!(data < NUM_CARGO && CargoSpec::Get(data)->IsValid())) return CMD_ERROR;
 					break;
+
 
 				default:
 					if (data > 2047) return CMD_ERROR;
@@ -1765,12 +1771,13 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 
 			case MOF_COND_VARIABLE: {
 				/* Check whether old conditional variable had a cargo as value */
-				bool old_var_was_cargo = (order->GetConditionVariable() == OCV_CARGO_ACCEPTANCE || order->GetConditionVariable() == OCV_CARGO_WAITING);
-				bool old_var_was_slot = (order->GetConditionVariable() == OCV_SLOT_OCCUPANCY || order->GetConditionVariable() == OCV_TRAIN_IN_SLOT);
+				OrderConditionVariable ocv = order->GetConditionVariable();
+				bool old_var_was_cargo = (ocv == OCV_CARGO_ACCEPTANCE || ocv == OCV_CARGO_WAITING);
+				bool old_var_was_slot = (ocv == OCV_SLOT_OCCUPANCY || ocv == OCV_TRAIN_IN_SLOT);
 				order->SetConditionVariable((OrderConditionVariable)data);
 
 				OrderConditionComparator occ = order->GetConditionComparator();
-				switch (order->GetConditionVariable()) {
+				switch (ocv) {
 					case OCV_UNCONDITIONALLY:
 						order->SetConditionComparator(OCC_EQUALS);
 						order->SetConditionValue(0);
@@ -1781,7 +1788,11 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 						if (!old_var_was_slot) order->GetXDataRef() = INVALID_TRACE_RESTRICT_SLOT_ID;
 						if (occ != OCC_IS_TRUE && occ != OCC_IS_FALSE) order->SetConditionComparator(OCC_IS_TRUE);
 						break;
-
+					case OCV_CARGO_AMOUNT:
+						if (occ == OCC_IS_TRUE || occ == OCC_IS_FALSE) order->SetConditionComparator(OCC_EQUALS);
+						order->SetConditionValue((uint16) GetFirstValidCargo());
+						order->GetXDataRef() = 0;
+						break;
 					case OCV_CARGO_ACCEPTANCE:
 					case OCV_CARGO_WAITING:
 						if (!old_var_was_cargo) order->SetConditionValue((uint16) GetFirstValidCargo());
@@ -1832,6 +1843,10 @@ CommandCost CmdModifyOrder(TileIndex tile, DoCommandFlag flags, uint32 p1, uint3
 
 			case MOF_WAYPOINT_FLAGS:
 				order->SetWaypointFlags((OrderWaypointFlags)data);
+				break;
+
+			case MOF_COND_XDATA://need this to somehow to modify xdata(amount) for CARGO_AMOUNT orders
+				order->GetXDataRef() = data;
 				break;
 
 			default: NOT_REACHED();
@@ -2525,6 +2540,12 @@ VehicleOrderID ProcessConditionalOrder(const Order *order, const Vehicle *v)
 		case OCV_AGE:                skip_order = OrderConditionCompare(occ, v->age / DAYS_IN_LEAP_YEAR,        value); break;
 		case OCV_REQUIRES_SERVICE:   skip_order = OrderConditionCompare(occ, v->NeedsServicing(),               value); break;
 		case OCV_UNCONDITIONALLY:    skip_order = true; break;
+		case OCV_CARGO_AMOUNT: {
+				uint32 amount = order->GetXData();
+				StationID next_station = GetNextRealStation(v, order);
+				if (Station::IsValidID(next_station)) skip_order = OrderConditionCompare(occ, Station::Get(next_station)->goods[value].cargo.AvailableCount(), amount);
+				break;
+		}
 		case OCV_CARGO_WAITING: {
 			StationID next_station = GetNextRealStation(v, order);
 			if (Station::IsValidID(next_station)) skip_order = OrderConditionCompare(occ, (Station::Get(next_station)->goods[value].cargo.AvailableCount() > 0), value);

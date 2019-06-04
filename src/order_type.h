@@ -173,18 +173,19 @@ enum OrderConditionComparator {
  * Enumeration for the data to set in #CmdModifyOrder.
  */
 enum ModifyOrderFlags {
-	MOF_NON_STOP,        ///< Passes an OrderNonStopFlags.
-	MOF_STOP_LOCATION,   ///< Passes an OrderStopLocation.
-	MOF_UNLOAD,          ///< Passes an OrderUnloadType.
-	MOF_LOAD,            ///< Passes an OrderLoadType
-	MOF_DEPOT_ACTION,    ///< Selects the OrderDepotAction
-	MOF_COND_VARIABLE,   ///< A conditional variable changes.
-	MOF_COND_COMPARATOR, ///< A comparator changes.
-	MOF_COND_VALUE,      ///< The value to set the condition to.
-	MOF_COND_DESTINATION,///< Change the destination of a conditional order.
-	MOF_WAYPOINT_FLAGS,  ///< Change the waypoint flags
+	MOF_NON_STOP,          ///< Passes an OrderNonStopFlags.
+	MOF_STOP_LOCATION,     ///< Passes an OrderStopLocation.
+	MOF_UNLOAD,            ///< Passes an OrderUnloadType.
+	MOF_LOAD,              ///< Passes an OrderLoadType
+	MOF_DEPOT_ACTION,      ///< Selects the OrderDepotAction
+	MOF_COND_VARIABLE,     ///< A conditional variable changes.
+	MOF_COND_COMPARATOR,   ///< A comparator changes.
+	MOF_COND_VALUE,        ///< The value to set the condition to.
+	MOF_COND_DESTINATION,  ///< Change the destination of a conditional order.
+	MOF_WAYPOINT_FLAGS,    ///< Change the waypoint flags
 	MOF_CARGO_TYPE_UNLOAD, ///< Passes an OrderUnloadType and a CargoID.
 	MOF_CARGO_TYPE_LOAD,   ///< Passes an OrderLoadType and a CargoID.
+	MOF_COND_XDATA,        ///< Modify conditional xdata
 	MOF_END
 };
 template <> struct EnumPropsT<ModifyOrderFlags> : MakeEnumPropsT<ModifyOrderFlags, byte, MOF_NON_STOP, MOF_END, MOF_END, 4> {};

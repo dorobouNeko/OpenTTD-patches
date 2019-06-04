@@ -878,6 +878,15 @@ void DrawOrderString(const Vehicle *v, const Order *order, int order_index, int 
 					SetDParam(3, STR_TRACE_RESTRICT_VARIABLE_UNDEFINED);
 				}
 				SetDParam(2, order->GetConditionComparator() == OCC_IS_TRUE ? STR_ORDER_CONDITIONAL_COMPARATOR_TRAIN_IN_SLOT : STR_ORDER_CONDITIONAL_COMPARATOR_TRAIN_NOT_IN_SLOT);
+			} else if (ocv == OCV_CARGO_AMOUNT) {
+				uint cargo_type = order->GetConditionValue();
+				uint amount = order->GetXData();
+				OrderConditionComparator occ = order->GetConditionComparator();
+				SetDParam(0, STR_ORDER_CONDITIONAL_NUM);
+				SetDParam(2, STR_ORDER_CONDITIONAL_NEXT_STATION_CARGO);
+				SetDParam(3, CargoSpec::Get(cargo_type)->name);
+				SetDParam(4, STR_ORDER_CONDITIONAL_COMPARATOR_EQUALS + occ);
+				SetDParam(5, amount);
 			} else {
 				OrderConditionComparator occ = order->GetConditionComparator();
 				bool is_cargo = ocv == OCV_CARGO_ACCEPTANCE || ocv == OCV_CARGO_WAITING;
